@@ -1,4 +1,13 @@
+import {
+  cloneElement,
+  createContext,
+  useContext,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
+import { HiXMark } from "react-icons/hi2";
 import styled from "styled-components";
+import { useClickOutside } from "../hooks/useClickOutside";
 
 const StyledModal = styled.div`
   position: fixed;
@@ -48,3 +57,64 @@ const Button = styled.button`
     color: var(--color-grey-500);
   }
 `;
+
+//Compound Component pattern
+// 1. Create context
+const ModalContext = createContext();
+
+//2. Create parent component
+function Modal({ children }) {
+  const [openName, setOpenName] = useState("");
+
+  const close = () => setOpenName("");
+  const open = setOpenName;
+
+  return (
+    <ModalContext.Provider value={{ openName, close, open }}>
+      {children}
+    </ModalContext.Provider>
+  );
+}
+//3. Create children components
+function Open({ children, opens: opensWindowName }) {
+  const { open } = useContext(ModalContext);
+
+  return cloneElement(children, { onClick: () => open(opensWindowName) });
+}
+
+function Window({ children, name }) {
+  const { openName, close } = useContext(ModalContext);
+
+  const ref = useClickOutside(close);
+  // const ref = useRef();
+
+  // //Detecting a click outside modal window
+  // useEffect(function () {
+  //   function handleClick(e) {
+  //     if(ref.current && !ref.current.contains(e.target)) close();
+  //   }
+
+  //   document.addEventListener("click", handleClick, true);
+
+  //   return () => document.removeEventListener("click", handleClick, true);
+  // }, [close]);
+
+  if (name !== openName) return null;
+  //React portal
+  return createPortal(
+    <Overlay>
+      <StyledModal ref={ref}>
+        <Button onClick={close}>
+          <HiXMark />
+        </Button>
+        <div>{cloneElement(children, { onCloseModal: close })}</div>
+      </StyledModal>
+    </Overlay>,
+    document.body
+  );
+}
+//4. Set properties to parent component
+Modal.Open = Open;
+Modal.Window = Window;
+
+export default Modal;
