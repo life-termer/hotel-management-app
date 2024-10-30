@@ -7,7 +7,7 @@ const StyledTable = styled.div`
   font-size: 1.4rem;
   background-color: var(--color-grey-0);
   border-radius: 7px;
-  overflow: hidden;
+  overflow: auto;
 `;
 
 const CommonRow = styled.div`
@@ -16,6 +16,7 @@ const CommonRow = styled.div`
   column-gap: 2.4rem;
   align-items: center;
   transition: none;
+  min-width: 800px;
 `;
 
 const StyledHeader = styled(CommonRow)`
