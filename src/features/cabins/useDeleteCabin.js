@@ -13,7 +13,10 @@ export function useDeleteCabin() {
         queryKey: ["cabins"],
       });
     },
-    onError: (err) => toast.err(err.message),
+    onError: (err) => {
+      console.log(err);
+      toast.error(err.message);
+    },
   });
 
   return { isDeleting, deleteCabin };

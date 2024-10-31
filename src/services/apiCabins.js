@@ -4,7 +4,6 @@ export async function getCabins() {
   const { data, error } = await supabase.from("cabins").select("*");
 
   if (error) {
-    console.error(error);
     throw new Error("Cabins could not be loaded");
   }
 
@@ -34,11 +33,12 @@ export async function createEditCabin(newCabin, id) {
   const { data, error } = await query.select().single();
 
   if (error) {
-    console.error(error);
+    if (error.code === "42501" || error.code === "PGRST116")
+      throw new Error("Only authorized users can create / edit cabins");
     throw new Error("Cabin could not be created");
   }
   // 2. Upload image
-  if(hasImagePath) return data;
+  if (hasImagePath) return data;
 
   const { error: storageError } = await supabase.storage
     .from("cabin-images")
@@ -47,7 +47,6 @@ export async function createEditCabin(newCabin, id) {
   // 3. Delete the cabin fi there was an error uploading image
   if (storageError) {
     await supabase.from("cabins").delete().eq("id", data.id);
-    console.error(storageError);
     throw new Error(
       "Cabin image could not be uploaded and the cabin was not created"
     );
@@ -57,9 +56,16 @@ export async function createEditCabin(newCabin, id) {
 }
 
 export async function deleteCabin(id) {
-  const { data, error } = await supabase.from("cabins").delete().eq("id", id);
+  const { data, error } = await supabase
+    .from("cabins")
+    .delete()
+    .eq("id", id)
+    .single();
   if (error) {
-    console.error(error);
+    if (error.code == "23503")
+      throw new Error("Delete booking for this cabin first");
+    if (error.code === "PGRST116")
+      throw new Error("Only authorized users can delete cabins");
     throw new Error("Cabin could not be deleted");
   }
   return data;
